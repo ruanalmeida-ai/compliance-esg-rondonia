@@ -58,11 +58,21 @@ service_account_b64 = "SEU_JSON_EM_BASE64"
 
 ### 3. Atualizar Base de Dados
 
+#### Opção A: Usar dados reais do IBAMA/ICMBio
+
 ```bash
 python scraper.py
 ```
 
 Ou use o botão "🔄 Atualizar Base" dentro do app.
+
+#### Opção B: Gerar dados de exemplo para testes
+
+```bash
+python gerar_dados_exemplo.py
+```
+
+Isso criará um arquivo `car_embargos.gpkg` com dados fictícios para demonstração.
 
 ### 4. Executar
 

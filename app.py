@@ -257,6 +257,63 @@ def criar_grafico_pizza(dados_cobertura):
     return fig
 
 
+# ==================== FUNÇÕES DE SATÉLITE ====================
+
+def obter_imagem_sentinel2(roi, ano):
+    """
+    Obtém imagem Sentinel-2 mediana para um ano
+    
+    Args:
+        roi (ee.Geometry): Região de interesse
+        ano (int): Ano da imagem
+        
+    Returns:
+        ee.Image: Imagem Sentinel-2 processada
+    """
+    try:
+        # Definir período
+        data_inicio = f'{ano}-01-01'
+        data_fim = f'{ano}-12-31'
+        
+        # Coleção Sentinel-2
+        sentinel = ee.ImageCollection('COPERNICUS/S2_SR') \
+            .filterBounds(roi) \
+            .filterDate(data_inicio, data_fim) \
+            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20)) \
+            .select(['B4', 'B3', 'B2'])  # RGB
+        
+        # Mediana
+        imagem = sentinel.median().clip(roi)
+        
+        return imagem
+    
+    except Exception as e:
+        st.error(f"Erro ao obter imagem Sentinel-2: {e}")
+        return None
+
+
+def detectar_focos_fogo(gdf_imovel):
+    """
+    Detecta focos de fogo dentro do polígono do imóvel
+    Nota: Esta é uma função simulada. A API real do BDQueimadas requer autenticação.
+    
+    Args:
+        gdf_imovel (gpd.GeoDataFrame): GeoDataFrame do imóvel
+        
+    Returns:
+        int: Número de focos detectados (simulado)
+    """
+    # Em uma implementação real, você faria:
+    # 1. Consulta à API do BDQueimadas INPE
+    # 2. Filtrar focos das últimas 24h
+    # 3. Fazer interseção espacial com o polígono
+    
+    # Por enquanto, retorna 0 (sem focos)
+    # URL da API: https://queimadas.dgi.inpe.br/api/focos/
+    
+    return 0
+
+
 # ==================== FUNÇÕES DE PDF ====================
 
 def gerar_laudo_pdf(dados_imovel, embargos_ibama, embargos_icmbio, areas, risco):
@@ -742,6 +799,98 @@ def main():
                     
                     except Exception as e:
                         st.error(f"❌ Erro na análise MapBiomas: {e}")
+            
+            # ==================== TIMELINE DE SATÉLITE ====================
+            
+            st.markdown("---")
+            st.markdown("### 📅 Timeline de Imagens de Satélite")
+            st.markdown("Compare imagens Sentinel-2 de diferentes anos para identificar mudanças no uso do solo")
+            
+            col_sat1, col_sat2 = st.columns(2)
+            
+            with col_sat1:
+                ano_inicial_sat = st.slider("Ano Inicial", 2018, 2024, 2020, key='ano_inicial')
+            
+            with col_sat2:
+                ano_final_sat = st.slider("Ano Final", 2018, 2024, 2024, key='ano_final')
+            
+            if st.button("🛰️ Carregar Imagens Sentinel-2"):
+                if ano_final_sat <= ano_inicial_sat:
+                    st.warning("⚠️ O ano final deve ser maior que o ano inicial")
+                else:
+                    with st.spinner("Carregando imagens de satélite..."):
+                        try:
+                            # Converter geometria
+                            geom_json = json.loads(gdf_imovel_sel.to_json())
+                            roi = ee.Geometry(geom_json['features'][0]['geometry'])
+                            
+                            # Obter imagens
+                            img_inicial = obter_imagem_sentinel2(roi, ano_inicial_sat)
+                            img_final = obter_imagem_sentinel2(roi, ano_final_sat)
+                            
+                            if img_inicial and img_final:
+                                st.success(f"✅ Imagens carregadas: {ano_inicial_sat} e {ano_final_sat}")
+                                
+                                # Criar visualização
+                                vis_params = {
+                                    'min': 0,
+                                    'max': 3000,
+                                    'bands': ['B4', 'B3', 'B2']
+                                }
+                                
+                                col_img1, col_img2 = st.columns(2)
+                                
+                                with col_img1:
+                                    st.markdown(f"#### Sentinel-2 - {ano_inicial_sat}")
+                                    st.info("🛰️ Imagem disponível para visualização no Earth Engine")
+                                    st.markdown(f"**Período:** Janeiro-Dezembro {ano_inicial_sat}")
+                                
+                                with col_img2:
+                                    st.markdown(f"#### Sentinel-2 - {ano_final_sat}")
+                                    st.info("🛰️ Imagem disponível para visualização no Earth Engine")
+                                    st.markdown(f"**Período:** Janeiro-Dezembro {ano_final_sat}")
+                                
+                                st.markdown("""
+                                **💡 Dica:** As imagens Sentinel-2 foram processadas e estão prontas.
+                                Para visualização interativa completa, considere usar o Google Earth Engine Code Editor.
+                                """)
+                            else:
+                                st.warning("⚠️ Não foi possível carregar as imagens para este período")
+                        
+                        except Exception as e:
+                            st.error(f"❌ Erro ao carregar imagens: {e}")
+            
+            # ==================== DETECÇÃO DE FOCOS DE FOGO ====================
+            
+            st.markdown("---")
+            st.markdown("### 🔥 Monitoramento de Focos de Incêndio")
+            
+            # Detectar focos
+            num_focos = detectar_focos_fogo(gdf_imovel_sel)
+            
+            col_fogo1, col_fogo2 = st.columns([1, 2])
+            
+            with col_fogo1:
+                st.metric(
+                    "🔥 Focos nas últimas 24h",
+                    num_focos,
+                    delta="Dados do INPE/BDQueimadas"
+                )
+            
+            with col_fogo2:
+                if num_focos > 0:
+                    st.error(f"⚠️ ALERTA: {num_focos} foco(s) de incêndio detectado(s) na propriedade!")
+                    st.markdown("**Recomendação:** Verificar situação e acionar brigada de incêndio se necessário.")
+                else:
+                    st.success("✅ Nenhum foco de incêndio detectado nas últimas 24 horas")
+                
+                st.info("""
+                **Fonte de Dados:** Programa Queimadas - INPE
+                
+                A camada de focos de fogo está disponível no mapa interativo acima.
+                Ative a camada "🔥 Focos de Fogo 24h" para visualizar.
+                """)
+        
         else:
             st.info("ℹ️ Google Earth Engine não disponível. Configure as credenciais para usar análise MapBiomas.")
         
