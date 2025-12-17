@@ -114,6 +114,18 @@ O arquivo `car_embargos.gpkg` (GeoPackage) deve conter as camadas:
 - **Plotly**: Gráficos interativos
 - **ReportLab**: Geração de PDFs
 
+## 🔒 Segurança
+
+Este projeto segue as melhores práticas de segurança:
+
+- ✅ Todas as dependências atualizadas para versões sem vulnerabilidades conhecidas
+- ✅ Fiona >= 1.10b2 (corrige CVE-2020-14152, CVE-2023-45853)
+- ✅ Pillow >= 10.3.0 (corrige buffer overflow)
+- ✅ Secrets não commitados (`.gitignore` configurado)
+- ✅ Validação de geometrias para prevenir ataques
+
+Para mais informações, consulte [SECURITY.md](SECURITY.md).
+
 ## 👨‍💻 Desenvolvido por
 
 **Ruan Almeida**
