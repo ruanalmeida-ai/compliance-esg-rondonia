@@ -1,0 +1,15 @@
+streamlit==1.31.0
+streamlit-folium==0.18.0
+folium==0.15.1
+geopandas==0.14.2
+pandas==2.2.0
+plotly==5.18.0
+fiona>=1.10b2
+earthengine-api==0.1.384
+geemap==0.30.0
+openpyxl==3.1.2
+Shapely==2.0.2
+requests==2.31.0
+reportlab==4.0.9
+Pillow>=10.3.0
+numpy==1.26.3

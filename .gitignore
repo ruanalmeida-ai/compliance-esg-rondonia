@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Credenciais
+service_account.json
+*.pem
+*.key
+
+# Dados sensíveis
+car_embargos.gpkg
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.prj
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporários
+*.tmp
+*.log
+mapa_temp.png
